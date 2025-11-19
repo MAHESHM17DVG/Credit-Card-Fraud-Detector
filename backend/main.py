@@ -1,97 +1,109 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import joblib
 import numpy as np
 from pathlib import Path
+import requests
 
 app = FastAPI(
     title="Credit Card Fraud Detection API",
-    description="API for predicting fraud using Logistic Regression, Random Forest, SVM, KNN, Decision Tree",
+    description="API for predicting fraud using Logistic Regression & Random Forest",
     version="1.0.0"
 )
 
-# Path to models folder
-MODEL_DIR = Path("models")
+# Allow frontend (Streamlit / Render) to call the API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Available models
+MODEL_DIR = Path("models")
+MODEL_DIR.mkdir(exist_ok=True)
+
+# URLs will be added later after models uploaded
 AVAILABLE_MODELS = {
-    "logreg": MODEL_DIR / "logreg.pkl",
-    "rf": MODEL_DIR / "rf.pkl",
-    "knn": MODEL_DIR / "knn.pkl",
-    "dt": MODEL_DIR / "dt.pkl",
+    "logreg": (
+        MODEL_DIR / "logreg.pkl",
+        "https://github.com/SRIHARSHA-BHARADWAJ/Credit-Card-Fraud-Detection-ML-WebApp/releases/download/v1.0.0/logreg.pkl"
+    ),
+    "rf": (
+        MODEL_DIR / "rf.pkl",
+        "https://github.com/SRIHARSHA-BHARADWAJ/Credit-Card-Fraud-Detection-ML-WebApp/releases/download/v1.0.0/rf.pkl"
+    ),
 }
 
-# Cache to store loaded models
+
 MODEL_CACHE = {}
 
-# Input format for predict endpoint
 class FeatureInput(BaseModel):
     features: List[float]
 
 
-# ----------------------------
-# Load model dynamically
-# ----------------------------
-def load_model(model_name: str):
+def download_file(url, dest_path):
+    try:
+        print(f"Downloading: {url}")
+        r = requests.get(url, stream=True, timeout=60)
+        r.raise_for_status()
+        with open(dest_path, "wb") as f:
+            for chunk in r.iter_content(8192):
+                f.write(chunk)
+        print("Downloaded:", dest_path)
+    except Exception as e:
+        raise Exception(f"Download failed: {e}")
+
+
+def load_model(model_name):
     if model_name not in AVAILABLE_MODELS:
-        raise HTTPException(status_code=400, detail=f"Model '{model_name}' not found.")
+        raise HTTPException(status_code=400, detail="Model not found")
+
+    local_path, url = AVAILABLE_MODELS[model_name]
+
+    if not local_path.exists():
+        if url:
+            download_file(url, local_path)
+        else:
+            raise HTTPException(status_code=500, detail="Model file missing")
 
     if model_name in MODEL_CACHE:
         return MODEL_CACHE[model_name]
 
-    model_path = AVAILABLE_MODELS[model_name]
-    if not model_path.exists():
-        raise HTTPException(status_code=400, detail=f"Model file missing: {model_path}")
-
-    model = joblib.load(model_path)
+    model = joblib.load(local_path)
     MODEL_CACHE[model_name] = model
     return model
 
 
-# ----------------------------
-# Home Route
-# ----------------------------
 @app.get("/")
 def home():
-    return {"message": "Fraud Detection API running successfully!"}
+    return {"message": "Fraud Detection API running!"}
 
 
-# ----------------------------
-# Return available models
-# ----------------------------
 @app.get("/get-models")
 def get_models():
     return {"available_models": list(AVAILABLE_MODELS.keys())}
 
 
-# ----------------------------
-# Predict Endpoint
-# ----------------------------
 @app.post("/predict")
 def predict(input_data: FeatureInput, model: str = "logreg"):
-
-    # Load model
     try:
         model_obj = load_model(model)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
-    # Convert input to array
     x = np.array(input_data.features).reshape(1, -1)
+    pred = int(model_obj.predict(x)[0])
 
-    # Prediction
-    pred = model_obj.predict(x)[0]
-
-    # Probability
     try:
-        prob = model_obj.predict_proba(x)[0][1]
-        prob = float(prob)
+        prob = float(model_obj.predict_proba(x)[0][1])
     except:
         prob = "N/A"
 
     return {
         "model_used": model,
-        "prediction": int(pred),
+        "prediction": pred,
         "fraud_probability": prob
     }
