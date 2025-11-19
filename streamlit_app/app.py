@@ -168,8 +168,10 @@ elif mode == "Upload CSV File":
 
 st.subheader("📊 Model Performance Visualizations")
 
-# Only works if backend returns true labels + probabilities
-if 'y_true' in result and 'y_prob' in result:
+st.subheader("📊 Model Performance Visualizations")
+
+# Safe check: only show plots if backend sent metrics
+if isinstance(result, dict) and 'y_true' in result and 'y_prob' in result:
     st.write("### ROC Curve")
     st.pyplot(plot_roc_curve(result['y_true'], result['y_prob']))
 
@@ -179,4 +181,4 @@ if 'y_true' in result and 'y_prob' in result:
     st.write("### Confusion Matrix")
     st.pyplot(plot_confusion_matrix(result['y_true'], result['y_pred']))
 else:
-    st.info("Plotting available only for batch predictions or CSV uploads.")
+    st.info("📌 Plots will appear here when you upload a CSV file for batch prediction.")
