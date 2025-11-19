@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import numpy as np
 import pandas as pd
+from utils_plots import plot_roc_curve, plot_precision_recall, plot_confusion_matrix
 
 # ============================
 # CONFIGURE PAGE
@@ -164,3 +165,18 @@ elif mode == "Upload CSV File":
             st.success("Completed!")
             st.write("### Results:")
             st.json(predictions)
+
+st.subheader("📊 Model Performance Visualizations")
+
+# Only works if backend returns true labels + probabilities
+if 'y_true' in result and 'y_prob' in result:
+    st.write("### ROC Curve")
+    st.pyplot(plot_roc_curve(result['y_true'], result['y_prob']))
+
+    st.write("### Precision-Recall Curve")
+    st.pyplot(plot_precision_recall(result['y_true'], result['y_prob']))
+
+    st.write("### Confusion Matrix")
+    st.pyplot(plot_confusion_matrix(result['y_true'], result['y_pred']))
+else:
+    st.info("Plotting available only for batch predictions or CSV uploads.")
