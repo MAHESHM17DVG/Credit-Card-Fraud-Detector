@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from utils_plots import plot_roc_curve, plot_precision_recall, plot_confusion_matrix
 
+result = {}
+
 # ============================
 # CONFIGURE PAGE
 # ============================
@@ -168,17 +170,16 @@ elif mode == "Upload CSV File":
 
 st.subheader("📊 Model Performance Visualizations")
 
-st.subheader("📊 Model Performance Visualizations")
-
-# Safe check: only show plots if backend sent metrics
-if isinstance(result, dict) and 'y_true' in result and 'y_prob' in result:
+# Plots only show when batch mode provides full metrics
+if isinstance(result, dict) and result.get("mode") == "batch":
     st.write("### ROC Curve")
-    st.pyplot(plot_roc_curve(result['y_true'], result['y_prob']))
+    st.pyplot(plot_roc_curve(result["y_true"], result["y_prob"]))
 
     st.write("### Precision-Recall Curve")
-    st.pyplot(plot_precision_recall(result['y_true'], result['y_prob']))
+    st.pyplot(plot_precision_recall(result["y_true"], result["y_prob"]))
 
     st.write("### Confusion Matrix")
-    st.pyplot(plot_confusion_matrix(result['y_true'], result['y_pred']))
+    st.pyplot(plot_confusion_matrix(result["y_true"], result["y_pred"]))
 else:
-    st.info("📌 Plots will appear here when you upload a CSV file for batch prediction.")
+    st.info("📌 Visualizations will appear here when batch CSV prediction is added.")
+
