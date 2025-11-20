@@ -1,109 +1,148 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from typing import List
 import joblib
 import numpy as np
 from pathlib import Path
-import requests
 
+# -------------------------------
+# APP CONFIG
+# -------------------------------
 app = FastAPI(
     title="Credit Card Fraud Detection API",
     description="API for predicting fraud using Logistic Regression & Random Forest",
     version="1.0.0"
 )
 
-# Allow frontend (Streamlit / Render) to call the API
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Enable GZip compression → 5x speedup for large requests
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+# -------------------------------
+# MODEL PATHS
+# -------------------------------
 MODEL_DIR = Path("models")
-MODEL_DIR.mkdir(exist_ok=True)
 
-# URLs will be added later after models uploaded
-AVAILABLE_MODELS = {
-    "logreg": (
-        MODEL_DIR / "logreg.pkl",
-        "https://github.com/SRIHARSHA-BHARADWAJ/Credit-Card-Fraud-Detection-ML-WebApp/releases/download/v1.0.0/logreg.pkl"
-    ),
-    "rf": (
-        MODEL_DIR / "rf.pkl",
-        "https://github.com/SRIHARSHA-BHARADWAJ/Credit-Card-Fraud-Detection-ML-WebApp/releases/download/v1.0.0/rf.pkl"
-    ),
+MODEL_URLS = {
+    "logreg": "https://github.com/SRIHARSHA-BHARADWAJ/Credit-Card-Fraud-Detection-ML-WebApp/releases/download/v1.0.0/logreg.pkl",
+    "rf": "https://github.com/SRIHARSHA-BHARADWAJ/Credit-Card-Fraud-Detection-ML-WebApp/releases/download/v1.0.0/rf.pkl",
 }
-
 
 MODEL_CACHE = {}
 
-class FeatureInput(BaseModel):
-    features: List[float]
+# -------------------------------
+# Download model if missing
+# -------------------------------
+import requests
 
+def download_model(model_name: str):
+    dest = MODEL_DIR / f"{model_name}.pkl"
+    url = MODEL_URLS.get(model_name)
 
-def download_file(url, dest_path):
-    try:
-        print(f"Downloading: {url}")
-        r = requests.get(url, stream=True, timeout=60)
-        r.raise_for_status()
-        with open(dest_path, "wb") as f:
-            for chunk in r.iter_content(8192):
-                f.write(chunk)
-        print("Downloaded:", dest_path)
-    except Exception as e:
-        raise Exception(f"Download failed: {e}")
+    if not url:
+        raise HTTPException(status_code=400, detail=f"No download URL for {model_name}")
 
+    MODEL_DIR.mkdir(exist_ok=True)
 
-def load_model(model_name):
-    if model_name not in AVAILABLE_MODELS:
-        raise HTTPException(status_code=400, detail="Model not found")
+    print(f"Downloading model: {model_name} ...")
+    r = requests.get(url)
+    if r.status_code != 200:
+        raise HTTPException(status_code=500, detail=f"Failed to download model: {url}")
 
-    local_path, url = AVAILABLE_MODELS[model_name]
+    with open(dest, "wb") as f:
+        f.write(r.content)
 
-    if not local_path.exists():
-        if url:
-            download_file(url, local_path)
-        else:
-            raise HTTPException(status_code=500, detail="Model file missing")
+    print(f"Saved model: {dest}")
+    return dest
 
+# -------------------------------
+# Load Model
+# -------------------------------
+def load_model(model_name: str):
     if model_name in MODEL_CACHE:
         return MODEL_CACHE[model_name]
 
-    model = joblib.load(local_path)
+    model_path = MODEL_DIR / f"{model_name}.pkl"
+
+    if not model_path.exists():
+        model_path = download_model(model_name)
+
+    try:
+        model = joblib.load(model_path)
+    except:
+        raise HTTPException(status_code=500, detail="Model corrupted or unreadable.")
+
     MODEL_CACHE[model_name] = model
     return model
 
+# -------------------------------
+# INPUT SCHEMAS
+# -------------------------------
+class FeatureInput(BaseModel):
+    features: List[float]
 
+class BatchFeatures(BaseModel):
+    features: List[List[float]]
+
+# -------------------------------
+# HOME ROUTE
+# -------------------------------
 @app.get("/")
 def home():
     return {"message": "Fraud Detection API running!"}
 
-
+# -------------------------------
+# LIST MODELS
+# -------------------------------
 @app.get("/get-models")
 def get_models():
-    return {"available_models": list(AVAILABLE_MODELS.keys())}
+    return {"available_models": list(MODEL_URLS.keys())}
 
-
+# -------------------------------
+# SINGLE PREDICT
+# -------------------------------
 @app.post("/predict")
 def predict(input_data: FeatureInput, model: str = "logreg"):
-    try:
-        model_obj = load_model(model)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
+    model_obj = load_model(model)
     x = np.array(input_data.features).reshape(1, -1)
+
     pred = int(model_obj.predict(x)[0])
 
     try:
         prob = float(model_obj.predict_proba(x)[0][1])
     except:
-        prob = "N/A"
+        prob = None
 
     return {
         "model_used": model,
         "prediction": pred,
         "fraud_probability": prob
+    }
+
+# -------------------------------
+# BATCH PREDICT (FAST)
+# -------------------------------
+@app.post("/predict_batch")
+def predict_batch(batch: BatchFeatures, model: str = "rf"):
+
+    model_obj = load_model(model)
+
+    X = np.array(batch.features)
+
+    try:
+        preds = model_obj.predict(X).astype(int).tolist()
+    except:
+        raise HTTPException(status_code=500, detail="Batch prediction failed.")
+
+    try:
+        probs = model_obj.predict_proba(X)[:, 1].astype(float).tolist()
+    except:
+        probs = [None] * len(preds)
+
+    return {
+        "model_used": model,
+        "n_rows": len(preds),
+        "predictions": preds,
+        "probabilities": probs
     }
