@@ -191,18 +191,18 @@ if mode == "Upload CSV File (FAST MODE)":
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
 
     if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+        df = pd.read_csv(uploaded_file)
 
-    # store true labels
-    y_true_global = df["Class"].copy() if "Class" in df.columns else None
+        # store true labels
+        y_true_global = df["Class"].copy() if "Class" in df.columns else None
 
-    df = df.drop(columns=["Class"], errors="ignore").iloc[:, :30]
+        df = df.drop(columns=["Class"], errors="ignore").iloc[:, :30]
 
-    st.write("### Preview:")
-    st.dataframe(df.head())
+        st.write("### Preview:")
+        st.dataframe(df.head())
 
-    if st.button("🚀 Predict for All Rows"):
-        out_df = predict_in_chunks(df, model_name=model)
+        if st.button("🚀 Predict for All Rows"):
+            out_df = predict_in_chunks(df, model_name=model)
 
         if out_df is None:
             st.error("Batch prediction failed — check backend logs.")
