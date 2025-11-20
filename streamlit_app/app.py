@@ -1,413 +1,422 @@
-###############################
-# FINAL BOSS EDITION — APP.PY
-###############################
-# Ultra-premium Dark UI • Perfect Gauge • No Syntax Errors
-# Manual & CSV • Fallback 405 Handling • Optimized & Clean
+# OBSIDIAN QUANTUM EDITION — FINAL VERSION (Hybrid Apple × NVIDIA)
+# - Compact gauge
+# - Larger text everywhere
+# - Removed empty transparent blocks
+# - No whitespace waste
+# - Ultra-premium liquid glass UI
+# - Fully corrected, no syntax errors
 
 import streamlit as st
 import requests
 import numpy as np
 import pandas as pd
-import math
 import time
+import math
 from typing import List
 
-# -------------------------------------------------------
+# ----------------------------
 # PAGE CONFIG
-# -------------------------------------------------------
+# ----------------------------
 st.set_page_config(
-    page_title="Credit Card Fraud Detection",
+    page_title="Credit Card Fraud Detection — Obsidian Quantum",
     page_icon="💳",
-    layout="wide",
-    initial_sidebar_state="collapsed",
+    layout="wide"
 )
 
-# -------------------------------------------------------
-# DARK LIQUID GLASS CSS — POLISHED
-# -------------------------------------------------------
+# ----------------------------
+# PREMIUM DARK THEME (Hybrid Apple × NVIDIA)
+# ----------------------------
 st.markdown("""
 <style>
 :root{
-  --bg:#050708;
-  --muted:#98a3ad;
-  --accent:#00b7ff;
-  --accent2:#6aff88;
-  --white-soft:rgba(246,248,250,0.96);
+  --bg:#0b0f14;
+  --panel: rgba(255,255,255,0.03);
+  --glass: rgba(255,255,255,0.05);
+  --muted:#9aa5b1;
+  --accent-nv:#76ff03;
+  --accent-blue:#0aa6ff;
+  --white-soft: rgba(255,255,255,0.92);
 }
 
-html, body, .stApp {
-  background:
-    radial-gradient(1200px 420px at 6% 12%, rgba(4,6,10,0.36), transparent 8%),
-    radial-gradient(800px 380px at 94% 88%, rgba(8,10,14,0.28), transparent 8%),
-    var(--bg);
+/* BACKGROUND */
+.stApp {
+  background: radial-gradient(900px 500px at 10% 10%, rgba(20,30,40,0.35), transparent 60%),
+              radial-gradient(1100px 700px at 90% 90%, rgba(6,8,14,0.4), transparent 70%),
+              var(--bg);
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(180deg, var(--glass), rgba(255,255,255,0.02));
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+}
+
+.title {
+  font-size: 38px;
+  font-weight: 900;
   color: var(--white-soft);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  letter-spacing: -0.5px;
 }
 
-/* Centered container */
-.center-wrap { display:flex; justify-content:center; }
-.center-panel {
-  width: 980px; max-width:95%;
-  padding:20px; border-radius:16px;
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.04);
-  box-shadow:0 20px 56px rgba(0,0,0,0.65);
-  backdrop-filter:blur(10px);
+.subtitle {
+  color: var(--muted);
+  font-size: 15px;
+  margin-top: 6px;
 }
 
-/* Headline */
-.hdr-title {
-  font-size:32px; font-weight:900;
-  margin:0; padding:0;
-}
-.hdr-sub { font-size:13px; color:var(--muted); }
-
-/* Gauge card */
-.gauge-card {
-  min-width:260px;
-  border-radius:14px;
-  padding:10px;
-  background:rgba(255,255,255,0.02);
-  border:1px solid rgba(255,255,255,0.03);
-  box-shadow:0 12px 40px rgba(0,0,0,0.65);
+/* CARDS */
+.card {
+  background: linear-gradient(180deg, var(--glass), rgba(255,255,255,0.02));
+  border-radius: 16px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  backdrop-filter: blur(8px);
+  transition: 0.18s ease;
 }
 
-/* Input blocks */
-.inputs-wrap { display:flex; gap:18px; margin-top:10px; flex-wrap:wrap; justify-content:center; }
-.input-col { display:flex; flex-direction:column; gap:10px; min-width:200px; }
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+}
 
-/* Buttons */
+/* BUTTONS */
 .stButton>button {
-  background:linear-gradient(90deg,rgba(0,183,255,0.12),rgba(106,255,136,0.10));
-  border-radius:10px;
-  border:1px solid rgba(0,183,255,0.12);
-  color:white; font-weight:800; padding:10px 14px;
+  background: linear-gradient(90deg, rgba(118,255,3,0.14), rgba(0,174,255,0.12));
+  border: 1px solid rgba(118,255,3,0.18);
+  color: var(--white-soft);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
 }
 
-/* Badges */
-.badge { padding:7px 12px; border-radius:999px; font-weight:800; }
-.badge-low { background:rgba(106,255,136,0.06); color:#07a457; border:1px solid rgba(106,255,136,0.12); }
-.badge-med { background:rgba(0,183,255,0.05); color:#00b7ff; border:1px solid rgba(0,183,255,0.10); }
-.badge-high { background:rgba(255,90,90,0.08); color:#ff6060; border:1px solid rgba(255,90,90,0.14); }
-
-/* Logs */
-.log-box {
-  background:rgba(255,255,255,0.02);
-  border:1px solid rgba(255,255,255,0.04);
-  padding:12px;
-  border-radius:10px;
+/* BADGES */
+.badge-low {
+  background: rgba(16,185,129,0.10);
+  color:#10b981;
+  padding:8px 12px;
+  border-radius:14px;
+  font-weight:800;
+  font-size:16px;
+  border:1px solid rgba(16,185,129,0.14);
 }
 
-/* Footer */
-.credit { text-align:center; margin-top:22px; color:var(--muted); font-size:13px; }
-.credit a { color:var(--accent); font-weight:700; text-decoration:none; }
+.badge-med {
+  background: rgba(249,115,22,0.10);
+  color:#f97316;
+  padding:8px 12px;
+  border-radius:14px;
+  font-weight:800;
+  font-size:16px;
+  border:1px solid rgba(249,115,22,0.14);
+}
+
+.badge-high {
+  background: rgba(239,68,68,0.10);
+  color:#ef4444;
+  padding:8px 12px;
+  border-radius:14px;
+  font-weight:900;
+  font-size:17px;
+  border:1px solid rgba(239,68,68,0.18);
+  box-shadow:0 0 20px rgba(239,68,68,0.12);
+}
+
+/* TEXT SMALL */
+.muted {
+  color: var(--muted);
+  font-size:14px;
+}
+
+/* CREDIT */
+.credit {
+  text-align:center;
+  font-size:14px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+.credit a {
+  color: var(--accent-nv);
+  font-weight:800;
+  text-decoration:none;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------
-# FEATURE ORDER HELPERS
-# -------------------------------------------------------
-KAGGLE_ORDER = [f"V{i}" for i in range(1, 29)] + ["Amount", "Time"]
-
-def prepare_features_df(df: pd.DataFrame) -> pd.DataFrame:
-    df_local = df.copy().reset_index(drop=True)
-    if "Class" in df_local.columns:
-        df_local = df_local.drop(columns=["Class"])
-
-    present = [c for c in KAGGLE_ORDER if c in df_local.columns]
-    if len(present) >= 12:
-        for c in KAGGLE_ORDER:
-            if c not in df_local.columns:
-                df_local[c] = 0.0
-        return df_local[KAGGLE_ORDER].astype(float)
-
-    numeric = df_local.select_dtypes(include=[np.number]).columns.tolist()
-    if len(numeric) >= 30:
-        feat = df_local[numeric[:30]].copy()
-        feat.columns = KAGGLE_ORDER
-        return feat
-
-    for i in range(30 - df_local.shape[1]):
-        df_local[f"pad_{i}"] = 0.0
-
-    feat_df = df_local.iloc[:, :30].copy()
-    feat_df.columns = KAGGLE_ORDER
-    return feat_df.fillna(0.0).astype(float)
-
-# -------------------------------------------------------
-# GAUGE (SIZE 200) — COMPACT & CRYSTAL CLEAR
-# -------------------------------------------------------
-def render_gauge(percent: float, size: int = 200) -> str:
-    p = max(0.0, min(100.0, float(percent)))
-    r = 78
+# ----------------------------
+# COMPACT PREMIUM GAUGE
+# ----------------------------
+def render_gauge(percent: float, size: int = 200):
+    pct = max(0, min(100, float(percent)))
+    r = 80
     circ = 2 * math.pi * r
-    filled = (p / 100.0) * circ
+    filled = circ * (pct / 100)
     empty = circ - filled
+
     return f"""
     <div style="display:flex;justify-content:center;">
       <svg width="{size}" height="{size}" viewBox="0 0 220 220">
         <defs>
-          <linearGradient id="gC" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#6aff88"/>
-            <stop offset="55%" stop-color="#00b7ff"/>
-            <stop offset="100%" stop-color="#ff9a66"/>
+          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#76ff03"/>
+            <stop offset="50%" stop-color="#00d1ff"/>
+            <stop offset="100%" stop-color="#ff8a00"/>
           </linearGradient>
+          <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
 
         <g transform="translate(110,110)">
-          <circle r="{r}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="14"/>
-          <circle r="{r}" fill="none" stroke="url(#gC)" stroke-width="14"
+          <circle r="{r}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16"/>
+          <circle r="{r}" fill="none" stroke="url(#grad)" stroke-width="16"
             stroke-linecap="round"
             stroke-dasharray="{filled} {empty}"
             stroke-dashoffset="{circ*0.25}"
             transform="rotate(-90)"
-            style="transition:stroke-dasharray 0.7s ease;"
-          />
-          <text x="0" y="-4" text-anchor="middle"
-                font-size="26" font-weight="800" fill="#e6f7ff">{p:.2f}%</text>
-          <text x="0" y="20" text-anchor="middle"
-                font-size="11" fill="#98a3ad">Fraud likelihood</text>
+            filter="url(#glow)"
+            style="transition: stroke-dasharray 0.8s ease;">
+          </circle>
+
+          <text x="0" y="-4" text-anchor="middle" font-size="30" font-weight="900" fill="#e6faff">{pct:.2f}%</text>
+          <text x="0" y="20" text-anchor="middle" font-size="13" fill="#9aa5b1">Fraud likelihood</text>
         </g>
       </svg>
     </div>
     """
 
-# -------------------------------------------------------
+# ----------------------------
+# FEATURE ORDERING
+# ----------------------------
+KAGGLE_ORDER = [f"V{i}" for i in range(1, 29)] + ["Amount", "Time"]
+
+def prepare_features_df(df):
+    df = df.copy().reset_index(drop=True)
+    if "Class" in df.columns:
+        df = df.drop(columns=["Class"])
+    present = [c for c in KAGGLE_ORDER if c in df.columns]
+
+    if len(present) >= 12:
+        for c in KAGGLE_ORDER:
+            if c not in df.columns:
+                df[c] = 0.0
+        return df[KAGGLE_ORDER].astype(float)
+
+    numeric = df.select_dtypes(include=[np.number]).columns.tolist()
+    if len(numeric) >= 30:
+        out = df[numeric[:30]].copy()
+        out.columns = KAGGLE_ORDER
+        return out
+
+    for i in range(30 - df.shape[1]):
+        df[f"pad_{i}"] = 0.0
+
+    feat = df.iloc[:, :30].copy()
+    feat.columns = KAGGLE_ORDER
+    return feat.astype(float)
+
+# ----------------------------
 # BACKEND ENDPOINTS
-# -------------------------------------------------------
-API_BASE = "https://credit-card-fraud-detection-ml-webapp.onrender.com"
-API_SINGLE = API_BASE + "/predict"
-API_BATCH = API_BASE + "/predict-batch"
-API_MODELS = API_BASE + "/get-models"
+# ----------------------------
+API = "https://credit-card-fraud-detection-ml-webapp.onrender.com"
+API_SINGLE = API + "/predict"
+API_BATCH = API + "/predict-batch"
+API_MODELS = API + "/get-models"
 
-def safe_get_models():
+def safe_post(url, payload, timeout=200):
     try:
-        r = requests.get(API_MODELS, timeout=4)
-        r.raise_for_status()
-        return r.json().get("available_models", ["logreg", "rf"])
-    except:
-        return ["logreg", "rf"]
-
-MODELS = safe_get_models()
-
-# fallback POST handler
-def post_with_fallback(url, payload, model, timeout=10):
-    try:
-        r = requests.post(f"{url}?model={model}", json=payload, timeout=timeout)
+        r = requests.post(url, json=payload, timeout=timeout)
+        return r.json(), r.status_code
     except Exception as e:
         return {"error": str(e)}, 500
-    if r.status_code == 405:
-        try:
-            r2 = requests.post(url, json=payload, timeout=timeout)
-            return r2.json(), r2.status_code
-        except Exception as e:
-            return {"error": str(e)}, 500
-    try:
-        return r.json(), r.status_code
-    except:
-        return {"error": r.text}, r.status_code
 
-# -------------------------------------------------------
-# SESSION VARIABLES
-# -------------------------------------------------------
-for key, val in {
-    "last_prob": None,
-    "last_single": None,
-    "out_df": None,
-    "logs": [],
-    "model": MODELS[0],
-}.items():
+# ----------------------------
+# SESSION STATE
+# ----------------------------
+for key in ["last_prob", "last_res", "out_df", "logs"]:
     if key not in st.session_state:
-        st.session_state[key] = val
+        st.session_state[key] = None if key!="logs" else []
 
-# -------------------------------------------------------
-# MAIN PANEL
-# -------------------------------------------------------
-st.markdown('<div class="center-wrap"><div class="center-panel">', unsafe_allow_html=True)
-
-# Header
-st.markdown("""
-<div>
-  <div class="hdr-title">Credit Card Fraud Detection</div>
-  <div class="hdr-sub">Enterprise accuracy. Real-time probability. Zero clutter.</div>
-</div>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------------
-# GAUGE
-# -------------------------------------------------------
-st.markdown('<div style="text-align:center;margin-top:10px;">', unsafe_allow_html=True)
-st.markdown('<div class="gauge-card">', unsafe_allow_html=True)
-
-if st.session_state.last_prob is not None:
-    st.components.v1.html(render_gauge(st.session_state.last_prob), height=250)
-else:
-    st.components.v1.html(render_gauge(0), height=250)
-
-st.markdown('</div></div>', unsafe_allow_html=True)
-
-# -------------------------------------------------------
-# INPUTS
-# -------------------------------------------------------
-st.markdown('<div class="inputs-wrap">', unsafe_allow_html=True)
-
-c1, c2, c3 = st.columns([1, 1, 1])
-
-with c1:
-    f1 = st.number_input("Feature 1", 0.0, key="f1")
-    f2 = st.number_input("Feature 2", 0.0, key="f2")
-
-with c2:
-    f3 = st.number_input("Feature 3", 0.0, key="f3")
-    f4 = st.number_input("Feature 4", 0.0, key="f4")
-
-with c3:
-    f5 = st.number_input("Feature 5", 0.0, key="f5")
-    f6 = st.number_input("Feature 6", 0.0, key="f6")
-
+# ----------------------------
+# HERO SECTION
+# ----------------------------
+st.markdown('<div class="hero">', unsafe_allow_html=True)
+st.markdown('<div class="title">Credit Card Fraud Detection</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Professional • Ultra-grade precision • Real-time fraud scoring</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# -------------------------------------------------------
-# CONTROLS
-# -------------------------------------------------------
-colA, colB, colC = st.columns([1,1,1])
+# ----------------------------
+# SIDEBAR
+# ----------------------------
+st.sidebar.markdown("### Model")
+try:
+    models_list = requests.get(API_MODELS, timeout=4).json().get("available_models", [])
+except:
+    models_list = ["logreg","rf"]
 
-with colA:
-    run_single = st.button("Run Prediction")
+model = st.sidebar.radio("Choose model:", models_list)
 
-with colB:
-    sensitivity = st.slider("Sensitivity", 0.0, 100.0, 60.0)
+st.sidebar.markdown("### Mode")
+mode = st.sidebar.selectbox("Select:", ["Manual (6 features)", "CSV Bulk"])
 
-with colC:
-    show_raw = st.checkbox("Show Raw Output")
+sensitivity = st.sidebar.slider("Risk threshold", 40.0, 90.0, 60.0, 1.0)
 
-# -------------------------------------------------------
-# RUN SINGLE PREDICTION
-# -------------------------------------------------------
-if run_single:
-    features = [f1, f2, f3, f4, f5, f6] + [0.0] * 24
-    st.info("Requesting model prediction...")
+show_raw = st.sidebar.checkbox("Show backend raw response")
 
-    out, code = post_with_fallback(API_SINGLE, {"features": features}, st.session_state.model, timeout=12)
+# ----------------------------
+# LAYOUT
+# ----------------------------
+left, right = st.columns([2,1])
 
-    if code != 200:
-        st.error(f"Backend responded with status {code}")
-        st.write(out)
-        st.session_state.logs.append({"error": out})
-    else:
-        st.success("Prediction received")
-        st.session_state.last_single = out
+# ----------------------------
+# LEFT — MANUAL + CSV
+# ----------------------------
+with left:
 
-        prob = out.get("fraud_probability")
-        try:
-            prob_pct = round(float(prob) * 100, 2) if prob is not None else None
-        except:
-            prob_pct = None
+    # MANUAL
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Single Prediction (Manual Input)")
+    st.markdown('<div class="muted">Enter six numeric features. Remaining are auto-padded.</div>', unsafe_allow_html=True)
 
-        st.session_state.last_prob = prob_pct
+    c1, c2 = st.columns(2)
+    with c1:
+        f1 = st.number_input("Feature 1", 0.0)
+        f2 = st.number_input("Feature 2", 0.0)
+        f3 = st.number_input("Feature 3", 0.0)
+    with c2:
+        f4 = st.number_input("Feature 4", 0.0)
+        f5 = st.number_input("Feature 5", 0.0)
+        f6 = st.number_input("Feature 6", 0.0)
 
-        # Classification
-        if prob_pct is None:
-            st.markdown("<div class='muted'>Probability unavailable</div>", unsafe_allow_html=True)
+    if st.button("Run Single Prediction"):
+        features = [f1,f2,f3,f4,f5,f6] + [0.0]*24
+        st.info("Requesting backend...")
+        out, code = safe_post(f"{API_SINGLE}?model={model}", {"features":features})
+
+        if code != 200:
+            st.error(f"Backend error {code}")
+            st.session_state.logs.append(out)
         else:
-            med = sensitivity * 0.6
+            st.success("Prediction received")
+            st.session_state.last_res = out
+            prob = out.get("fraud_probability")
+            try:
+                pct = round(float(prob)*100,2)
+            except:
+                pct = None
+            st.session_state.last_prob = pct
 
-            if prob_pct >= sensitivity:
-                st.markdown(f"<div class='badge badge-high'>HIGH — {prob_pct}%</div>", unsafe_allow_html=True)
-                st.markdown("<div class='muted'>Action: escalate for manual review.</div>", unsafe_allow_html=True)
-            elif prob_pct >= med:
-                st.markdown(f"<div class='badge badge-med'>ELEVATED — {prob_pct}%</div>", unsafe_allow_html=True)
-                st.markdown("<div class='muted'>Action: require secondary verification.</div>", unsafe_allow_html=True)
+            # Badge logic
+            if pct is None:
+                st.markdown('<div class="muted">No probability returned.</div>', unsafe_allow_html=True)
             else:
-                st.markdown(f"<div class='badge badge-low'>LOW — {prob_pct}%</div>", unsafe_allow_html=True)
-                st.markdown("<div class='muted'>Action: allow; monitor.</div>", unsafe_allow_html=True)
+                high = sensitivity
+                mid = sensitivity*0.6
+                if pct>=high:
+                    st.markdown(f"<div class='badge-high'>HIGH RISK — {pct}%</div>", unsafe_allow_html=True)
+                elif pct>=mid:
+                    st.markdown(f"<div class='badge-med'>ELEVATED — {pct}%</div>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<div class='badge-low'>LOW RISK — {pct}%</div>", unsafe_allow_html=True)
 
-        if show_raw:
-            st.json(out)
+            if show_raw:
+                st.json(out)
 
-# -------------------------------------------------------
-# BULK SCORING
-# -------------------------------------------------------
-with st.expander("Bulk CSV Prediction"):
-    upload = st.file_uploader("Upload CSV", type=["csv"])
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    if upload:
+    # CSV BULK
+    st.markdown('<div class="card" style="margin-top:18px">', unsafe_allow_html=True)
+    st.subheader("Bulk CSV Prediction")
+    uploaded = st.file_uploader("Upload CSV", type=["csv"])
+
+    if uploaded:
         try:
-            df = pd.read_csv(upload)
-            st.dataframe(df.head())
+            df = pd.read_csv(uploaded)
         except Exception as e:
-            st.error(f"Failed to read CSV: {e}")
+            st.error(f"Error reading CSV: {e}")
             df = None
 
         if df is not None:
-            if "Class" in df.columns:
-                st.session_state.y_true = df["Class"]
+            st.dataframe(df.head())
 
             if st.button("Run Bulk Prediction"):
-                st.info("Processing in chunks...")
+                st.info("Preparing...")
                 feat_df = prepare_features_df(df)
                 n = len(feat_df)
-                chunk = 4000
                 preds, probs = [], []
-                pbar = st.progress(0)
-                t0 = time.time()
+                bar = st.progress(0)
 
-                for i in range(math.ceil(n / chunk)):
-                    s, e = i * chunk, min((i + 1) * chunk, n)
+                chunk = 4000
+                for i in range(math.ceil(n/chunk)):
+                    s = i*chunk
+                    e = min((i+1)*chunk, n)
                     batch = feat_df.iloc[s:e].values.tolist()
 
-                    out, code = post_with_fallback(API_BATCH, {"features": batch}, st.session_state.model, timeout=300)
+                    out, code = safe_post(f"{API_BATCH}?model={model}", {"features": batch})
 
                     if code != 200:
-                        st.error(f"Failed at chunk {i+1}: status {code}")
-                        st.write(out)
+                        st.error(f"Chunk {i+1} failed")
                         break
 
-                    preds.extend(out.get("predictions", []))
-                    probs.extend(out.get("probabilities", []))
+                    preds += out.get("predictions",[])
+                    probs += out.get("probabilities",[])
+                    bar.progress(e/n)
 
-                    pbar.progress(min(1.0, e / n))
+                if len(preds)==n:
+                    df_out = df.copy()
+                    df_out["prediction"]=preds
+                    df_out["probability"]=probs
+                    st.session_state.out_df = df_out
+                    st.success("Completed")
+                    st.dataframe(df_out.head())
+                    st.download_button("Download CSV", df_out.to_csv(index=False).encode("utf-8"))
 
-                out_df = df.copy()
-                out_df["prediction"] = preds
-                out_df["fraud_probability"] = probs
+    st.markdown('</div>', unsafe_allow_html=True)
 
-                st.session_state.out_df = out_df
-                st.success("Bulk Completed")
-                st.dataframe(out_df.head())
+# ----------------------------
+# RIGHT — GAUGE + LOGS
+# ----------------------------
+with right:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Fraud Gauge")
 
-                st.download_button(
-                    "Download Predictions",
-                    out_df.to_csv(index=False).encode("utf-8"),
-                    "predictions.csv",
-                    "text/csv"
-                )
-
-                st.write(f"Processed {n} rows in {time.time() - t0:.2f}s")
-
-# -------------------------------------------------------
-# CLOSE PANEL
-# -------------------------------------------------------
-st.markdown('</div></div>', unsafe_allow_html=True)
-
-# -------------------------------------------------------
-# SIDEBAR
-# -------------------------------------------------------
-st.sidebar.markdown("### Model")
-st.session_state.model = st.sidebar.radio("Select model", MODELS)
-
-with st.sidebar.expander("Logs"):
-    if len(st.session_state.logs) == 0:
-        st.markdown("<div class='muted'>No logs</div>", unsafe_allow_html=True)
+    if st.session_state.last_prob is not None:
+        st.components.v1.html(
+            render_gauge(st.session_state.last_prob),
+            height=260
+        )
+        st.markdown('<div class="muted">Adjust threshold in sidebar.</div>', unsafe_allow_html=True)
     else:
-        for lg in st.session_state.logs[-20:]:
-            st.write(lg)
+        st.markdown('<div class="muted">Run a prediction to show gauge.</div>', unsafe_allow_html=True)
 
-# -------------------------------------------------------
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="card" style="margin-top:18px">', unsafe_allow_html=True)
+    st.subheader("Logs")
+    if len(st.session_state.logs)==0:
+        st.markdown('<div class="muted">No logs yet.</div>', unsafe_allow_html=True)
+    else:
+        for entry in st.session_state.logs[-8:]:
+            st.write(entry)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ----------------------------
 # FOOTER
-# -------------------------------------------------------
+# ----------------------------
 st.markdown("""
 <div class="credit">
-Developed by <a href="https://github.com/SRIHARSHA-BHARADWAJ" target="_blank">SRIHARSHA-BHARADWAJ</a>
+Developed by <a href="https://github.com/SRIHARSHA-BHARADWAJ" target="_blank">SRIHARSHA-BHARADWAJ</a> · Obsidian Quantum Edition
 </div>
 """, unsafe_allow_html=True)
