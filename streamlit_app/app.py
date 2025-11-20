@@ -12,13 +12,7 @@ from utils_plots import (
 )
 
 # ===================================================
-# GLOBAL VARIABLES
-# ===================================================
-y_true_global = None
-out_df_global = None
-
-# ===================================================
-# CONFIGURE PAGE
+# PAGE CONFIG
 # ===================================================
 st.set_page_config(
     page_title="Credit Card Fraud Detection",
@@ -27,14 +21,23 @@ st.set_page_config(
 )
 
 # ===================================================
-# API URLS
+# SESSION STATE (REPLACES global)
+# ===================================================
+if "y_true" not in st.session_state:
+    st.session_state.y_true = None
+
+if "out_df" not in st.session_state:
+    st.session_state.out_df = None
+
+# ===================================================
+# API ROUTES
 # ===================================================
 API_SINGLE = "https://credit-card-fraud-detection-ml-webapp.onrender.com/predict"
 API_BATCH = "https://credit-card-fraud-detection-ml-webapp.onrender.com/predict-batch"
 API_MODELS = "https://credit-card-fraud-detection-ml-webapp.onrender.com/get-models"
 
 # ===================================================
-# PREMIUM UI STYLING
+# STYLING
 # ===================================================
 st.markdown("""
 <style>
@@ -49,7 +52,7 @@ st.markdown("""
 # HEADER
 # ===================================================
 st.markdown("<h1 class='main-title'>💳 Credit Card Fraud Detection</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>Select a model, enter values or upload a CSV file to detect fraud instantly.</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Select a model, enter values or upload a CSV to detect fraud instantly.</p>", unsafe_allow_html=True)
 st.write("")
 
 # ===================================================
@@ -84,8 +87,6 @@ def call_api(features_list, model_selected):
 # BATCH PREDICTION
 # ===================================================
 def predict_in_chunks(df, model_name="rf", chunk_size=4000):
-    global y_true_global
-    global out_df_global
 
     n = len(df)
     chunks = math.ceil(n / chunk_size)
@@ -137,14 +138,16 @@ def predict_in_chunks(df, model_name="rf", chunk_size=4000):
     df["prediction"] = preds
     df["fraud_probability"] = probs
 
-    if y_true_global is not None:
-        df["true_label"] = y_true_global.iloc[:len(df)]
+    # attach true labels
+    if st.session_state.y_true is not None:
+        df["true_label"] = st.session_state.y_true.iloc[:len(df)]
 
-    out_df_global = df
+    # save for visualization
+    st.session_state.out_df = df
     return df
 
 # ===================================================
-# MANUAL INPUT MODE
+# MANUAL MODE
 # ===================================================
 if mode == "Manual Input (5-6 values)":
     st.subheader("🧮 Manual Input Mode")
@@ -171,9 +174,9 @@ if mode == "Manual Input (5-6 values)":
             st.subheader("🔍 Prediction Result")
 
             if pred == 1:
-                st.error("⚠️ Fraud Detected!")
+                st.error("⚠️ FRAUD DETECTED!")
             else:
-                st.success("✅ Legitimate Transaction")
+                st.success("✅ LEGITIMATE TRANSACTION")
 
             st.markdown(f"<p class='probability-box'>Fraud Probability: {prob}</p>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
@@ -189,8 +192,8 @@ if mode == "Upload CSV File (FAST MODE)":
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
 
-        global y_true_global
-        y_true_global = df["Class"].copy() if "Class" in df.columns else None
+        # store true labels
+        st.session_state.y_true = df["Class"].copy() if "Class" in df.columns else None
 
         df = df.drop(columns=["Class"], errors="ignore").iloc[:, :30]
 
@@ -207,24 +210,20 @@ if mode == "Upload CSV File (FAST MODE)":
             st.success("Batch Prediction Complete!")
             st.dataframe(out_df.head())
 
-            global out_df_global
-            out_df_global = out_df
-
-            # Download CSV
             csv = out_df.to_csv(index=False).encode("utf-8")
             st.download_button("📥 Download Predictions CSV", csv, "predictions.csv", "text/csv")
 
 # ===================================================
-# VISUALIZATION BLOCK
+# VISUALIZATIONS
 # ===================================================
 st.subheader("📊 Model Performance Visualizations")
 
-if (y_true_global is not None) and (out_df_global is not None):
+if st.session_state.y_true is not None and st.session_state.out_df is not None:
     try:
-        plot_roc_curve(y_true_global, out_df_global["fraud_probability"])
-        plot_precision_recall(y_true_global, out_df_global["fraud_probability"])
-        plot_confusion_matrix(y_true_global, out_df_global["prediction"])
+        plot_roc_curve(st.session_state.y_true, st.session_state.out_df["fraud_probability"])
+        plot_precision_recall(st.session_state.y_true, st.session_state.out_df["fraud_probability"])
+        plot_confusion_matrix(st.session_state.y_true, st.session_state.out_df["prediction"])
     except Exception as e:
         st.error(f"Visualization error: {e}")
 else:
-    st.info("📌 Visualizations appear only after batch prediction **and** only when CSV contains the 'Class' column.")
+    st.info("📌 Visualizations appear only after a batch prediction **and** only when CSV contains the 'Class' label column.")
