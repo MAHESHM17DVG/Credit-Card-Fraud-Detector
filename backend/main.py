@@ -123,26 +123,32 @@ def predict(input_data: FeatureInput, model: str = "logreg"):
 # -------------------------------
 # BATCH PREDICT (FAST)
 # -------------------------------
-@app.post("/predict_batch")
-def predict_batch(batch: BatchFeatures, model: str = "rf"):
-
-    model_obj = load_model(model)
-
-    X = np.array(batch.features)
-
+@app.post("/predict-batch")
+def predict_batch(input_data: dict, model: str = "rf"):
     try:
-        preds = model_obj.predict(X).astype(int).tolist()
-    except:
-        raise HTTPException(status_code=500, detail="Batch prediction failed.")
+        # 1. Load model
+        model_obj = load_model(model)
 
-    try:
-        probs = model_obj.predict_proba(X)[:, 1].astype(float).tolist()
-    except:
-        probs = [None] * len(preds)
+        # 2. Extract features list
+        rows = input_data.get("features")
+        if rows is None:
+            raise HTTPException(status_code=400, detail="Missing 'features' key.")
 
-    return {
-        "model_used": model,
-        "n_rows": len(preds),
-        "predictions": preds,
-        "probabilities": probs
-    }
+        X = np.array(rows)
+
+        # 3. Predictions
+        preds = model_obj.predict(X).tolist()
+
+        # 4. Probabilities
+        try:
+            probs = model_obj.predict_proba(X)[:, 1].tolist()
+        except:
+            probs = [None] * len(preds)
+
+        return {
+            "predictions": preds,
+            "probabilities": probs
+        }
+
+    except Exception as e:
+        return {"detail": f"Batch prediction failed: {str(e)}"}

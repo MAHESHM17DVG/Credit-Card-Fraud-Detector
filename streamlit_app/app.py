@@ -104,7 +104,7 @@ def call_api(features_list, model_selected):
 # ============================
 # API CALL (BATCH)
 # ============================
-def predict_in_chunks(df, model_name="rf", chunk_size=4000):
+def predict_in_chunks(df, model_name="rf", chunk_size=3000):
     import math
     import time
     import requests
@@ -238,7 +238,13 @@ if mode == "Upload CSV File (FAST MODE)":
             out_df = predict_in_chunks(df, model_name=model, chunk_size=8000)
 
             st.success("Batch Prediction Complete!")
+            if out_df is None:
+                st.error("Batch prediction failed — check backend logs.")
+                st.stop()
+
+            st.success("Batch Prediction Complete!")
             st.dataframe(out_df.head())
+
 
             # Download CSV
             csv = out_df.to_csv(index=False).encode("utf-8")
