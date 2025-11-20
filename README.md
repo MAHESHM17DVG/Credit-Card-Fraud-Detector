@@ -1,4 +1,14 @@
-<p align="center"><img src="https://readme-typing-svg.demolab.com?font=Montserrat&weight=900&size=38&duration=1800&pause=400&color=00E5FF&background=00000000&center=true&vCenter=true&width=1100&lines=CREDIT+CARD+FRAUD+DETECTION;FASTAPI+%2B+STREAMLIT+%2B+MACHINE+LEARNING;30-FEATURE+MODEL+INFERENCE+PIPELINE;REAL-TIME+AND+BULK+PREDICTION+SYSTEM" /></p>
+<div align="center" style="padding:18px 0 6px 0;">
+  <img src="https://readme-typing-svg.demolab.com?font=Montserrat&weight=900&size=38&duration=1700&pause=300&color=00E5FF&center=true&vCenter=true&width=1100&lines=CREDIT+CARD+FRAUD+DETECTION;FASTAPI+%7C+STREAMLIT+%7C+ML+PIPELINE;REAL-TIME+%2B+BATCH+PREDICTION+SYSTEM" />
+</div>
+
+<div align="center" style="font-size:15px; color:#7f8c9b; margin-top:-8px; margin-bottom:18px; animation:fadeInSub 1.2s ease forwards; opacity:0;">
+A production-grade machine learning inference system using a 30‑feature financial dataset, FastAPI model serving, and a premium Streamlit analytical dashboard.
+</div>
+
+<style>
+@keyframes fadeInSub {0%{opacity:0; transform:translateY(12px);}100%{opacity:1; transform:translateY(0);}}
+</style>
 
 <div align="center" style="margin-top:18px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
 
@@ -26,9 +36,9 @@
 
 ---
 
-## 🧠 Project Overview — Ultra‑Grade System
+## 🧠 Project Overview — Technical Summary
 
-A fully engineered **Credit Card Fraud Detection System** built using:
+A fully engineered, production-aligned **Credit Card Fraud Detection System** leveraging optimized ML inference and robust API workflows. **Credit Card Fraud Detection System** built using:
 
 * FastAPI backend (Logistic Regression + Random Forest)
 * Streamlit premium UI with SVG gauge
@@ -38,7 +48,7 @@ A fully engineered **Credit Card Fraud Detection System** built using:
 
 ---
 
-## ✔ Capabilities
+## ✔ System Capabilities
 
 * Real‑time single transaction scoring
 * Fraud probability % + risk classification
@@ -48,7 +58,7 @@ A fully engineered **Credit Card Fraud Detection System** built using:
 
 ---
 
-## 🎯 Key Features
+## 🎯 Key Technical Features
 
 ### 🔍 Real‑Time Prediction
 
@@ -76,7 +86,7 @@ A fully engineered **Credit Card Fraud Detection System** built using:
 
 ---
 
-## 🏗 Architecture
+## 🏗 System Architecture
 
 ```
 Streamlit UI  →  FastAPI backend  →  ML models (RF / LR)  →  Probability + Prediction
@@ -84,7 +94,7 @@ Streamlit UI  →  FastAPI backend  →  ML models (RF / LR)  →  Probability +
 
 ---
 
-## 📂 Project Structure
+## 📂 Repository Structure
 
 ```
 Credit-Card-Fraud-Detection-ML-WebApp/
@@ -102,7 +112,7 @@ Credit-Card-Fraud-Detection-ML-WebApp/
 
 ---
 
-## 📦 Dataset
+## 📦 Dataset Specification
 
 Kaggle Credit Card Fraud Dataset (284,807 rows):
 
@@ -113,7 +123,7 @@ Kaggle Credit Card Fraud Dataset (284,807 rows):
 
 ---
 
-## 🚀 Run Locally
+## 🚀 Local Development Setup
 
 ### Frontend
 
@@ -139,7 +149,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ---
 
-## 🔮 Future Enhancements
+## 🔮 Planned Enhancements
 
 * Dockerization
 * GitHub Actions CI/CD
@@ -157,7 +167,7 @@ MIT License © 2025 **SRIHARSHA‑BHARADWAJ**
 
 ---
 
-## 👨‍💻 Author
+## 👨‍💻 Maintainer Information
 
 **Sriharsha Bharadwaj**
 AI & ML — B.M.S. College of Engineering
