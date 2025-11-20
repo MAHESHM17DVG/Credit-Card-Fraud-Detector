@@ -1,4 +1,4 @@
-# <p align="center"><img src="https://readme-typing-svg.demolab.com?font=Montserrat&weight=900&size=42&duration=2500&pause=800&color=00C6FF&center=true&vCenter=true&width=1000&lines=CREDIT+CARD+FRAUD+DETECTION;MACHINE+LEARNING+SYSTEM" /></p>
+<p align="center"><img src="https://readme-typing-svg.demolab.com?font=Montserrat&weight=900&size=46&duration=1800&pause=400&color=00F0FF&center=true&vCenter=true&width=1000&lines=CREDIT+CARD+FRAUD+DETECTION;ULTRA+INTELLIGENT+ML+SYSTEM;ENTERPRISE+GRADE+PREDICTION+ENGINE" /></p>
 
 <div align="center" style="margin-top:18px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
 
@@ -24,21 +24,23 @@
 
 ---
 
-## 🧠 Project Overview
+---
+
+## 🧠 Project Overview — Ultra-Grade System
 
 A fully engineered **Credit Card Fraud Detection System** built using:
 
 * FastAPI backend (Logistic Regression + Random Forest)
 * Streamlit premium UI with SVG gauge
-* Strict 30-feature inference alignment (V1–V28, Amount, Time)
-* Error-tolerant prediction pipeline
-* High-throughput batch inference (4K rows per chunk)
+* Strict 30‑feature inference alignment (V1–V28, Amount, Time)
+* Error‑tolerant prediction pipeline
+* High‑throughput batch inference (4K rows per chunk)
 
 ---
 
 ## ✔ Capabilities
 
-* Real-time single transaction scoring
+* Real‑time single transaction scoring
 * Fraud probability % + risk classification
 * CSV batch processing (any size)
 * Automatic feature ordering & padding
@@ -48,7 +50,7 @@ A fully engineered **Credit Card Fraud Detection System** built using:
 
 ## 🎯 Key Features
 
-### 🔍 Real-Time Prediction
+### 🔍 Real‑Time Prediction
 
 * Enter 6 features → remaining 24 padded automatically
 * Output includes: prediction, probability, recommendation
@@ -56,8 +58,8 @@ A fully engineered **Credit Card Fraud Detection System** built using:
 ### 📊 Batch CSV Processing
 
 * Upload CSV with any column order
-* Auto-aligned to model order
-* Chunk-based processing (4000 rows)
+* Auto‑aligned to model order
+* Chunk‑based processing (4000 rows)
 * Downloadable predictions CSV
 
 ### 🌀 SVG Animated Gauge
@@ -151,7 +153,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ## 📝 License
 
-MIT License © 2025 **SRIHARSHA-BHARADWAJ**
+MIT License © 2025 **SRIHARSHA‑BHARADWAJ**
 
 ---
 
