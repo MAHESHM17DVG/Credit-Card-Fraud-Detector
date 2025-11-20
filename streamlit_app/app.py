@@ -2,7 +2,14 @@ import streamlit as st
 import requests
 import numpy as np
 import pandas as pd
-from utils_plots import plot_roc_curve, plot_precision_recall, plot_confusion_matrix
+import time
+import math
+
+from utils_plots import (
+    plot_roc_curve,
+    plot_precision_recall,
+    plot_confusion_matrix
+)
 
 result = {}
 
@@ -16,12 +23,14 @@ st.set_page_config(
 )
 
 # ============================
-# API URL (Render backend)
+# API URLS
 # ============================
-API_URL = "https://credit-card-fraud-detection-ml-webapp.onrender.com/predict"
+API_SINGLE = "https://credit-card-fraud-detection-ml-webapp.onrender.com/predict"
+API_BATCH = "https://credit-card-fraud-detection-ml-webapp.onrender.com/predict_batch"
+API_MODELS = "https://credit-card-fraud-detection-ml-webapp.onrender.com/get-models"
 
 # ============================
-# STYLING (Premium UI)
+# PREMIUM UI STYLING
 # ============================
 st.markdown("""
     <style>
@@ -63,44 +72,80 @@ st.write("")
 # SIDEBAR
 # ============================
 st.sidebar.header("⚙️ Choose Model")
+
+try:
+    models = requests.get(API_MODELS).json().get("available_models", ["logreg", "rf"])
+except:
+    models = ["logreg", "rf"]
+
 model = st.sidebar.radio(
     "Select a Machine Learning Model:",
-    ["logreg", "rf"],
+    models,
     index=0,
 )
 
 st.sidebar.write("---")
-st.sidebar.info(f"🧠 Using model: **{model.upper()}**")
-
-st.sidebar.write("---")
 mode = st.sidebar.selectbox(
     "Choose Input Method:",
-    ["Manual Input (5-6 values)", "Upload CSV File"]
+    ["Manual Input (5-6 values)", "Upload CSV File (FAST MODE)"]
 )
 
 # ============================
-# MAIN LOGIC
+# API CALL (SINGLE)
 # ============================
-
 def call_api(features_list, model_selected):
-    """Sends the features to the backend API + returns output."""
     payload = {"features": features_list}
     try:
-        response = requests.post(f"{API_URL}?model={model_selected}", json=payload)
-        return response.json(), response.status_code
+        resp = requests.post(f"{API_SINGLE}?model={model_selected}", json=payload)
+        return resp.json(), resp.status_code
     except:
         return {"error": "Server unreachable"}, 500
 
+# ============================
+# API CALL (BATCH)
+# ============================
+def predict_in_chunks(df, model_name="rf", chunk_size=8000):
+    total = len(df)
+    chunks = math.ceil(total / chunk_size)
+
+    preds = []
+    probs = []
+
+    progress = st.progress(0)
+    status = st.empty()
+    t0 = time.time()
+
+    for i in range(chunks):
+        start = i * chunk_size
+        end = min((i + 1) * chunk_size, total)
+        batch = df.iloc[start:end].values.tolist()
+
+        payload = {"features": batch}
+
+        r = requests.post(f"{API_BATCH}?model={model_name}", json=payload)
+        out = r.json()
+
+        preds.extend(out["predictions"])
+        probs.extend(out["probabilities"])
+
+        progress.progress(end / total)
+        elapsed = time.time() - t0
+        eta = (elapsed / end) * (total - end)
+        status.text(f"Processed {end}/{total} rows — ETA {eta/60:.2f} mins")
+
+    df["prediction"] = preds
+    df["fraud_probability"] = probs
+
+    return df
 
 # ============================
-# MODE 1: MANUAL INPUT (simplified UI)
+# MODE 1 — MANUAL INPUT
 # ============================
 if mode == "Manual Input (5-6 values)":
     st.subheader("🧮 Manual Input Mode")
-    st.write("Enter **first 6 features** and system will auto-fill the rest with 0.")
 
     col1, col2 = st.columns(2)
-    
+
     with col1:
         f1 = st.number_input("Feature 1", 0.0)
         f2 = st.number_input("Feature 2", 0.0)
@@ -120,7 +165,7 @@ if mode == "Manual Input (5-6 values)":
         if status == 200:
             pred = result['prediction']
             prob = result['fraud_probability']
-            
+
             st.markdown("<div class='result-card'>", unsafe_allow_html=True)
             st.subheader("🔍 Prediction Result")
 
@@ -134,15 +179,12 @@ if mode == "Manual Input (5-6 values)":
 
         else:
             st.error("API Error!")
-            st.json(result)
-
 
 # ============================
-# MODE 2: CSV UPLOAD
+# MODE 2 — BATCH CSV
 # ============================
-elif mode == "Upload CSV File":
-    st.subheader("📂 Upload CSV File")
-    st.write("Upload a CSV containing **30 numeric features per row**.")
+if mode == "Upload CSV File (FAST MODE)":
+    st.subheader("📂 Upload CSV File (FAST MODE)")
 
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
 
@@ -152,34 +194,19 @@ elif mode == "Upload CSV File":
         st.dataframe(df.head())
 
         if st.button("🚀 Predict for All Rows", use_container_width=True):
-            predictions = []
-            st.write("Running predictions...")
+            st.write("Running fast batch predictions...")
 
-            for index, row in df.iterrows():
-                features = row.values.tolist()
-                result, status = call_api(features, model)
+            out_df = predict_in_chunks(df, model_name=model, chunk_size=8000)
 
-                if status == 200:
-                    predictions.append(result)
-                else:
-                    predictions.append({"error": "API Issue"})
+            st.success("Batch Prediction Complete!")
+            st.dataframe(out_df.head())
 
-            st.success("Completed!")
-            st.write("### Results:")
-            st.json(predictions)
+            # Download CSV
+            csv = out_df.to_csv(index=False).encode("utf-8")
+            st.download_button("📥 Download Predictions CSV", csv, "predictions.csv", "text/csv")
 
+# ============================
+# VISUALIZATION PLACEHOLDER
+# ============================
 st.subheader("📊 Model Performance Visualizations")
-
-# Plots only show when batch mode provides full metrics
-if isinstance(result, dict) and result.get("mode") == "batch":
-    st.write("### ROC Curve")
-    st.pyplot(plot_roc_curve(result["y_true"], result["y_prob"]))
-
-    st.write("### Precision-Recall Curve")
-    st.pyplot(plot_precision_recall(result["y_true"], result["y_prob"]))
-
-    st.write("### Confusion Matrix")
-    st.pyplot(plot_confusion_matrix(result["y_true"], result["y_pred"]))
-else:
-    st.info("📌 Visualizations will appear here when batch CSV prediction is added.")
-
+st.info("📌 Visualizations will appear here when batch prediction includes ground-truth labels.")
